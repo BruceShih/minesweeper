@@ -23,7 +23,7 @@ const rightClick = () => {
 <template>
   <button
     type="button"
-    class="block w-12 h-12"
+    class="flex justify-center items-center w-12 h-12"
     :class="{
       'bg-error': isRevealed,
       'bg-neutral': !isRevealed && isFlagged,

@@ -8,7 +8,9 @@ describe("NeutralCell", () => {
     const cell = wrapper.find("button");
     expect(cell.exists()).toBeTruthy();
     const classes = cell.classes();
-    expect(classes).toContain("block");
+    expect(classes).toContain("flex");
+    expect(classes).toContain("justify-center");
+    expect(classes).toContain("items-center");
     expect(classes).toContain("w-12");
     expect(classes).toContain("h-12");
     expect(classes).toContain("bg-base-200");
@@ -20,7 +22,9 @@ describe("NeutralCell", () => {
     expect(cell.exists()).toBeTruthy();
     await cell.trigger("click");
     const classes = cell.classes();
-    expect(classes).toContain("block");
+    expect(classes).toContain("flex");
+    expect(classes).toContain("justify-center");
+    expect(classes).toContain("items-center");
     expect(classes).toContain("w-12");
     expect(classes).toContain("h-12");
     expect(classes).toContain("bg-neutral");

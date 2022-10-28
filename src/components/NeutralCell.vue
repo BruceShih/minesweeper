@@ -15,7 +15,7 @@ const leftClick = () => {
 <template>
   <button
     type="button"
-    class="block w-12 h-12"
+    class="flex justify-center items-center w-12 h-12"
     :class="{
       'bg-neutral': isRevealed,
       'bg-base-200': !isRevealed,
