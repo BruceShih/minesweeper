@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { useGame } from "../useGame";
+import { Game } from "../useGame";
 
 describe("composable useGame()", () => {
-  const width = 9;
-  const height = 9;
-  const mines = 10;
+  const width = 16;
+  const height = 16;
+  const mines = 40;
   const adjacentCells = [
     [-1, -1],
     [-1, 0],
@@ -16,15 +16,19 @@ describe("composable useGame()", () => {
     [1, 0],
     [1, 1],
   ];
-  let game: ReturnType<typeof useGame>;
+  let game: Game;
 
   beforeEach(() => {
-    game = useGame(width, height, mines);
+    game = new Game();
+    game.width = width;
+    game.height = height;
+    game.mines = mines;
     game.generate();
   });
 
   it("generates successfully", () => {
     expect(game.cells.length).not.toBe(0);
+    expect(game.state).toBe("READY");
   });
 
   it("has valid board", () => {
@@ -64,7 +68,7 @@ describe("composable useGame()", () => {
   });
 
   it("has not started yet", () => {
-    expect(game.state).toBe("NOT_STARTED");
+    expect(game.state).toBe("READY");
     expect(game.win).toBe(false);
   });
 

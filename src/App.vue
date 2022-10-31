@@ -11,8 +11,10 @@ const gridWidth = ref(60);
 const gridHeight = ref(25);
 const mines = ref(150);
 
-const game = useGame(gridWidth.value, gridHeight.value, mines.value);
+const game = useGame();
 const generated = ref(false);
+const win = ref(false);
+const over = ref(false);
 
 const start = () => {
   switch (difficulty.value) {
@@ -35,11 +37,33 @@ const start = () => {
       break;
   }
 
+  game.width = gridWidth.value;
+  game.height = gridHeight.value;
+  game.mines = mines.value;
   game.generate();
   generated.value = true;
+  over.value = false;
+  win.value = false;
 };
 const toIndicatorCell = (cell: Cell) => {
   return cell as IndicatorCell;
+};
+
+const onReveal = (x: number, y: number) => {
+  if (game.state !== "OVER") {
+    game.revealCell(x, y);
+    console.log("state", game.state);
+    console.log("over", over.value);
+  }
+  if (game.state === "OVER") {
+    over.value = true;
+    win.value = game.win;
+  }
+};
+const onFlag = (x: number, y: number) => {
+  if (game.state !== "OVER") {
+    game.flagCell(x, y);
+  }
 };
 
 watchEffect(() => {
@@ -120,24 +144,43 @@ watchEffect(() => {
           class="flex max-w-fit max-h-fit"
         >
           <template v-for="(w, j) in gridWidth" :key="j">
-            <template v-if="game.cells[i][j].type === 'Indicator'">
-              <IndicatorCellComponent
-                :indicator="toIndicatorCell(game.cells[i][j]).indicator"
-                @click="game.revealCell(i, j)"
-              />
-            </template>
-            <template v-if="game.cells[i][j].type === 'Neutral'">
-              <NeutralCellComponent @click="game.revealCell(i, j)" />
-            </template>
-            <template v-if="game.cells[i][j].type === 'Primed'">
-              <PrimedCellComponent
-                @click="game.revealCell(i, j)"
-                @right-click="game.flagCell(i, j)"
-              />
-            </template>
+            <IndicatorCellComponent
+              v-if="game.cells[i][j].type === 'Indicator'"
+              :indicator="toIndicatorCell(game.cells[i][j]).indicator"
+              :reveal="toIndicatorCell(game.cells[i][j]).revealed"
+              :flag="game.cells[i][j].flagged"
+              @update:reveal="onReveal(i, j)"
+              @update:flag="onFlag(i, j)"
+            />
+            <NeutralCellComponent
+              v-if="game.cells[i][j].type === 'Neutral'"
+              :reveal="game.cells[i][j].revealed"
+              :flag="game.cells[i][j].flagged"
+              @update:reveal="onReveal(i, j)"
+              @update:flag="onFlag(i, j)"
+            />
+            <PrimedCellComponent
+              v-if="game.cells[i][j].type === 'Primed'"
+              :reveal="game.cells[i][j].revealed"
+              :flag="game.cells[i][j].flagged"
+              @update:reveal="onReveal(i, j)"
+              @update:flag="onFlag(i, j)"
+            />
           </template>
         </div>
       </div>
     </div>
   </main>
+  <div v-if="over" class="toast toast-center toast-bottom min-w-max">
+    <div v-if="!win" class="alert alert-warning w-full">
+      <div>
+        <span>You lose!</span>
+      </div>
+    </div>
+    <div v-if="win" class="alert alert-success w-full">
+      <div>
+        <span>You win!</span>
+      </div>
+    </div>
+  </div>
 </template>

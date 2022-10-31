@@ -1,5 +1,7 @@
-export function useGame(width: number, height: number, mines: number) {
-  return new Game(width, height, mines);
+import { reactive } from "vue";
+
+export function useGame() {
+  return reactive(new Game());
 }
 
 type CellType = "Neutral" | "Primed" | "Indicator";
@@ -20,12 +22,12 @@ export interface IndicatorCell extends BaseCell {
 
 export type Cell = NeutralCell | PrimedCell | IndicatorCell;
 
-export type State = "NOT_STARTED" | "STARTED" | "OVER";
+export type State = "INITIAL" | "READY" | "STARTED" | "OVER";
 
 export class Game {
-  private _width: number;
-  private _height: number;
-  private _mines: number;
+  private _width: number = 9;
+  private _height: number = 9;
+  private _mines: number = 10;
   private _cells: Cell[][] = [];
   private _adjacentCells = [
     [-1, -1],
@@ -41,15 +43,15 @@ export class Game {
   private _state: State;
   private _win: boolean;
 
-  constructor(width: number, height: number, mines: number) {
-    this._width = width;
-    this._height = height;
-    this._mines = mines;
-    this._state = "NOT_STARTED";
+  constructor() {
+    this._state = "INITIAL";
     this._win = false;
   }
 
   generate() {
+    // clear old board
+    this._cells = [];
+
     // generate mines
     let i = 0;
     const array = [];
@@ -106,12 +108,14 @@ export class Game {
         }
       }
     }
+
+    this._state = "READY";
   }
 
   revealCell(x: number, y: number): void {
     this.reveal(x, y);
 
-    if (this._state === "NOT_STARTED") {
+    if (this._state === "READY") {
       this._state = "STARTED";
     }
 
@@ -121,7 +125,7 @@ export class Game {
   flagCell(x: number, y: number) {
     this.flag(x, y);
 
-    if (this._state === "NOT_STARTED") {
+    if (this._state === "READY") {
       this._state = "STARTED";
     }
   }
@@ -138,7 +142,24 @@ export class Game {
     return this._win;
   }
 
+  set width(value: number) {
+    this._width = value;
+  }
+
+  set height(value: number) {
+    this._height = value;
+  }
+
+  set mines(value: number) {
+    this._mines = value;
+  }
+
   private reveal(x: number, y: number) {
+    if (this._cells[x][y].type === "Indicator") {
+      this._cells[x][y].revealed = true;
+      return;
+    }
+
     if (
       this._cells[x][y].revealed === false &&
       this._cells[x][y].flagged === false
@@ -147,7 +168,7 @@ export class Game {
     }
 
     // reveal adjacent neutral cells
-    if (this._cells[x][y].type === "Indicator") {
+    if (this._cells[x][y].type === "Neutral") {
       for (let i = 0; i < this._adjacentCells.length; i++) {
         const [a, b] = this._adjacentCells[i];
         if (
@@ -155,10 +176,32 @@ export class Game {
           x + a < this._height &&
           y + b >= 0 &&
           y + b < this._width &&
-          this._cells[x + a][y + b].type === "Neutral" &&
           this._cells[x + a][y + b].revealed === false
         ) {
-          this.reveal(x + a, y + b);
+          if (
+            this._cells[x + a][y + b].type === "Neutral" ||
+            this._cells[x + a][y + b].type === "Indicator"
+          ) {
+            this.reveal(x + a, y + b);
+          }
+        }
+      }
+    }
+  }
+
+  private revealAll() {
+    for (let i = 0; i < this._height; i++) {
+      for (let j = 0; j < this._width; j++) {
+        this._cells[i][j].revealed = true;
+      }
+    }
+  }
+
+  private revealAllButMines() {
+    for (let i = 0; i < this._height; i++) {
+      for (let j = 0; j < this._width; j++) {
+        if (this._cells[i][j].type !== "Primed") {
+          this._cells[i][j].revealed = true;
         }
       }
     }
@@ -167,6 +210,16 @@ export class Game {
   private flag(x: number, y: number) {
     if (this._cells[x][y].revealed === false) {
       this._cells[x][y].flagged = !this._cells[x][y].flagged;
+    }
+  }
+
+  private flagAllMines() {
+    for (let i = 0; i < this._height; i++) {
+      for (let j = 0; j < this._width; j++) {
+        if (this._cells[i][j].type === "Primed") {
+          this._cells[i][j].flagged = true;
+        }
+      }
     }
   }
 
@@ -183,6 +236,8 @@ export class Game {
     if (count === this._width * this._height - this._mines) {
       this._state = "OVER";
       this._win = true;
+      this.flagAllMines();
+      this.revealAllButMines();
       return;
     }
 
@@ -192,6 +247,7 @@ export class Game {
         if (this._cells[k][l].type === "Primed" && this._cells[k][l].revealed) {
           this._state = "OVER";
           this._win = false;
+          this.revealAll();
           return;
         }
       }

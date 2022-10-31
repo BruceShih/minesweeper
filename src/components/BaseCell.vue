@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { useVModel } from "@vueuse/core";
+import IconFlag from "../components/Icons/IconFlag.vue";
+import IconBomb from "../components/Icons/IconBomb.vue";
 
 const props = withDefaults(
   defineProps<{
-    indicator: number;
     reveal: boolean;
     flag: boolean;
   }>(),
@@ -14,8 +15,8 @@ const props = withDefaults(
 );
 
 const emits = defineEmits<{
-  (e: "update:reveal", payload: boolean): void;
-  (e: "update:flag", payload: boolean): void;
+  (e: "update:reveal"): void;
+  (e: "update:flag"): void;
 }>();
 
 const isRevealed = useVModel(props, "reveal", emits);
@@ -25,8 +26,7 @@ const leftClick = () => {
   if (isRevealed.value) return;
   isRevealed.value = true;
 };
-const rightClick = (e: MouseEvent) => {
-  e.preventDefault();
+const rightClick = () => {
   isFlagged.value = !isFlagged.value;
 };
 </script>
@@ -34,16 +34,21 @@ const rightClick = (e: MouseEvent) => {
 <template>
   <button
     type="button"
-    class="btn btn-sm btn-square flex justify-center items-center w-8 h-8"
+    class="flex justify-center items-center w-12 h-12"
     :class="{
-      'btn-active': isRevealed,
-      'bg-base-200': !isRevealed,
+      'bg-error': isRevealed,
+      'bg-neutral': !isRevealed && isFlagged,
+      'bg-base-200': !isRevealed && !isFlagged,
     }"
     @click="leftClick"
     @click.right="rightClick"
   >
-    <template v-if="isRevealed">
-      {{ props.indicator }}
-    </template>
+    <slot name="bomb">
+      <IconBomb />
+    </slot>
+    <slot name="flag">
+      <IconFlag />
+    </slot>
+    <slot name="indicator" />
   </button>
 </template>
