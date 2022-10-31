@@ -3,7 +3,7 @@
   "exclude": [],
   "compilerOptions": {
     "composite": true,
-    "lib": [],
-    "types": ["node", "happy-dom"]
+    "lib": ["DOM"],
+    "types": ["node"]
   }
 }
